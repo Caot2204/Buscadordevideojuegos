@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Buscador de videojuegos</string>
+    <string name="game_details_title">Detalles del juego</string>
+    <string name="search_game_label">Busca un videojuego...</string>
+    <string name="back_button">Atrás</string>
+    <string name="publisher_label">Publisher: %1$s</string>
+    <string name="developer_label">Developer: %1$s</string>
+    <string name="description_label">Description:</string>
+</resources>
