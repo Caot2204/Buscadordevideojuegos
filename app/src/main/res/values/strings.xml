@@ -8,4 +8,11 @@
     <string name="description_label">Description:</string>
     <string name="error_loading_label">Error to load, try again...</string>
     <string name="try_again_load">Try load again</string>
+    <string name="system_requirements_label">Minimun system requirements:</string>
+    <string name="os_label">"OS: %1$s "</string>
+    <string name="processor_label">Processor: %1$s</string>
+    <string name="memory_label">Memory: %1$s</string>
+    <string name="graphics_label">Graphics: %1$s</string>
+    <string name="storage_label">Storage: %1$s</string>
+    <string name="screenshots_label">Screenshots:</string>
 </resources>

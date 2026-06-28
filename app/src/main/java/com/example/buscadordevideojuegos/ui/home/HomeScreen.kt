@@ -30,6 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
@@ -37,6 +38,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
+import coil3.request.crossfade
+import coil3.request.error
+import coil3.request.placeholder
 import com.example.buscadordevideojuegos.R
 import com.example.buscadordevideojuegos.ui.common.ErrorIndicator
 import com.example.buscadordevideojuegos.ui.common.LoadingIndicator
@@ -188,7 +193,12 @@ fun VideoGameItemUi(
             modifier = Modifier.fillMaxWidth()
         ) {
             AsyncImage(
-                model = videoGameItem.thumbnail,
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(videoGameItem.thumbnail)
+                    .placeholder(R.drawable.image)
+                    .error(R.drawable.broken_image)
+                    .crossfade(true)
+                    .build(),
                 contentDescription = videoGameItem.title,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier

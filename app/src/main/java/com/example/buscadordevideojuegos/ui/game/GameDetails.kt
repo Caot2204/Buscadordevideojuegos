@@ -20,16 +20,16 @@ data class GameDetails(
     val developer: String,
     val release_date: String,
     val freetogame_profile_url: String,
-    val minimum_system_requirements: MinimumSystemRequirements,
+    val minimum_system_requirements: MinimumSystemRequirements?,
     val screenshots: List<Screenshot>,
 )
 
 data class MinimumSystemRequirements(
-    val os: String,
-    val processor: String,
-    val memory: String,
-    val graphics: String,
-    val storage: String,
+    val os: String?,
+    val processor: String?,
+    val memory: String?,
+    val graphics: String?,
+    val storage: String?,
 )
 
 data class Screenshot(
