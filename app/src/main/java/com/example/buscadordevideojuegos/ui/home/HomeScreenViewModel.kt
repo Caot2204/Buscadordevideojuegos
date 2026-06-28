@@ -1,6 +1,5 @@
 package com.example.buscadordevideojuegos.ui.home
 
-import androidx.compose.ui.text.toLowerCase
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.buscadordevideojuegos.data.network.VideoGameCatalogApi
@@ -11,45 +10,91 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.util.Locale
-import java.util.Locale.getDefault
 import javax.inject.Inject
 
 @HiltViewModel
 class HomeScreenViewModel @Inject constructor(
     private val videoGameCatalogApi: VideoGameCatalogApi
 ) : ViewModel() {
-    private val _uiState = MutableStateFlow(HomeScreenUiState())
+    private val _uiState: MutableStateFlow<HomeScreenUiState> = MutableStateFlow(HomeScreenUiState.Loading)
     val uiState: StateFlow<HomeScreenUiState> = _uiState.asStateFlow()
 
-    lateinit var videoGamesList: List<VideoGameItem>
+    private var videoGamesList: List<VideoGameItem> = emptyList()
 
     init {
+        loadVideogames()
+    }
+
+    fun loadVideogames() {
         viewModelScope.launch(Dispatchers.IO) {
-            videoGamesList = videoGameCatalogApi.getGames()
-            _uiState.update {
-                it.copy(videoGames = videoGamesList.shuffled())
+            _uiState.value = HomeScreenUiState.Loading
+            try {
+                videoGamesList = videoGameCatalogApi.getGames()
+                val categories = mutableListOf("All")
+                categories.addAll(
+                    videoGamesList.map { videogame ->
+                        videogame.genre
+                    }.distinct().shuffled()
+                )
+                _uiState.value = HomeScreenUiState.Success(
+                    videoGames = videoGamesList.shuffled(),
+                    categories = categories
+                )
+            } catch (e: Exception) {
+                _uiState.value = HomeScreenUiState.Error
             }
         }
     }
 
     fun searchVideoGame(searchWord: String) {
         viewModelScope.launch(Dispatchers.IO) {
-            _uiState.update {
-                it.copy(
-                    videoGames = if (searchWord.isNotEmpty()) {
-                        videoGamesList.filter { videogame ->
-                            videogame.title.lowercase().contains(searchWord.lowercase())
+            _uiState.update { currentState ->
+                if (currentState is HomeScreenUiState.Success) {
+                    currentState.copy(
+                        categorySelected = "All",
+                        videoGames = if (searchWord.isNotEmpty()) {
+                            videoGamesList.filter { videogame ->
+                                videogame.title.lowercase().contains(searchWord.lowercase())
+                            }
+                        } else {
+                            videoGamesList.shuffled()
                         }
-                    } else {
-                        videoGamesList.shuffled()
-                    }
-                )
+                    )
+                } else {
+                    currentState
+                }
+            }
+        }
+    }
+
+    fun filterByCategory(category: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            _uiState.update { currentState ->
+                if (currentState is HomeScreenUiState.Success) {
+                    currentState.copy(
+                        videoGames = if (category == "All") {
+                            videoGamesList.shuffled()
+                        } else {
+                            videoGamesList.filter { videogame ->
+                                videogame.genre == category
+                            }
+                        },
+                        categorySelected = category
+                    )
+                } else {
+                    currentState
+                }
             }
         }
     }
 }
 
-data class HomeScreenUiState(
-    val videoGames: List<VideoGameItem> = emptyList()
-)
+sealed interface HomeScreenUiState {
+    data class Success(
+        val categorySelected: String = "All",
+        val videoGames: List<VideoGameItem> = emptyList(),
+        val categories: List<String> = emptyList()
+    ) : HomeScreenUiState
+    object Error : HomeScreenUiState
+    object Loading : HomeScreenUiState
+}

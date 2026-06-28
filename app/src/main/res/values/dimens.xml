@@ -2,4 +2,5 @@
 <resources>
     <dimen name="padding_small">8.dp</dimen>
     <dimen name="padding_medium">16.dp</dimen>
+    <dimen name="progress_indicator_size">50.dp</dimen>
 </resources>

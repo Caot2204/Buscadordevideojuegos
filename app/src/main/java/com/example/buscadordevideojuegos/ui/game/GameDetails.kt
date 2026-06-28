@@ -1,5 +1,11 @@
 package com.example.buscadordevideojuegos.ui.game
 
+sealed interface GameDetailUiState {
+    data class Success(val gameDetails: GameDetails) : GameDetailUiState
+    object Error : GameDetailUiState
+    object Loading : GameDetailUiState
+}
+
 data class GameDetails(
     val id: Int,
     val title: String,

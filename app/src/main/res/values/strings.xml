@@ -6,4 +6,6 @@
     <string name="publisher_label">Publisher: %1$s</string>
     <string name="developer_label">Developer: %1$s</string>
     <string name="description_label">Description:</string>
+    <string name="error_loading_label">Error to load, try again...</string>
+    <string name="try_again_load">Try load again</string>
 </resources>

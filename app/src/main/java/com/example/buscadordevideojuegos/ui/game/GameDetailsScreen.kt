@@ -28,7 +28,9 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil3.compose.AsyncImage
 import com.example.buscadordevideojuegos.R
 import com.example.buscadordevideojuegos.ui.common.AppBarGame
+import com.example.buscadordevideojuegos.ui.common.ErrorIndicator
 import com.example.buscadordevideojuegos.ui.common.IconWithText
+import com.example.buscadordevideojuegos.ui.common.LoadingIndicator
 import com.example.buscadordevideojuegos.ui.navigation.NavigationDestination
 
 object GameDetailsScreenDestination : NavigationDestination {
@@ -44,7 +46,7 @@ fun GameDetailsScreen(
     modifier: Modifier = Modifier,
     gameDetailsScreenViewModel: GameDetailsScreenViewModel = hiltViewModel()
 ) {
-    val gameDetails = gameDetailsScreenViewModel.uiState.collectAsState().value.gameDetails
+    val uiState = gameDetailsScreenViewModel.uiState.collectAsState().value
 
     BackHandler {
         navigateBack()
@@ -54,16 +56,32 @@ fun GameDetailsScreen(
         topBar = {
             AppBarGame(
                 navigateBack = navigateBack,
-                title = gameDetails?.title ?: stringResource(R.string.game_details_title)
+                title = if (uiState is GameDetailUiState.Success) {
+                    uiState.gameDetails.title
+                } else {
+                    stringResource(R.string.game_details_title)
+                }
             )
         },
         modifier = modifier.fillMaxSize()
     ) { paddingValues ->
-        if (gameDetails != null) {
-            GameDetailsUi(
-                gameDetails = gameDetails,
-                modifier = Modifier.padding(paddingValues)
-            )
+        when (uiState) {
+            is GameDetailUiState.Success ->
+                GameDetailsUi(
+                    gameDetails = uiState.gameDetails,
+                    modifier = Modifier.padding(paddingValues)
+                )
+            is GameDetailUiState.Loading ->
+                LoadingIndicator(
+                    modifier = Modifier.padding(paddingValues)
+                )
+            is GameDetailUiState.Error ->
+                ErrorIndicator(
+                    onTryAgain = {
+                        gameDetailsScreenViewModel.loadGameDetails()
+                    },
+                    modifier = Modifier.padding(paddingValues)
+                )
         }
     }
 }

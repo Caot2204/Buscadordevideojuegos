@@ -24,20 +24,25 @@ class GameDetailsScreenViewModel @Inject constructor(
         -1
     }
 
-    private val _uiState = MutableStateFlow(GameDetailsScreenUiState())
-    val uiState: StateFlow<GameDetailsScreenUiState> = _uiState.asStateFlow()
+    private val _uiState: MutableStateFlow<GameDetailUiState> = MutableStateFlow(GameDetailUiState.Loading)
+    val uiState: StateFlow<GameDetailUiState> = _uiState.asStateFlow()
 
     init {
+        loadGameDetails()
+    }
+
+    fun loadGameDetails() {
         if (gameId != -1 ) {
             viewModelScope.launch {
-                _uiState.update {
-                    it.copy(gameDetails = videoGameCatalogApi.getGameDetails(gameId))
+                _uiState.value = GameDetailUiState.Loading
+                try {
+                    _uiState.value = GameDetailUiState.Success(
+                        gameDetails = videoGameCatalogApi.getGameDetails(gameId)
+                    )
+                } catch (e: Exception) {
+                    _uiState.value = GameDetailUiState.Error
                 }
             }
         }
     }
 }
-
-data class GameDetailsScreenUiState(
-    val gameDetails: GameDetails? = null
-)
