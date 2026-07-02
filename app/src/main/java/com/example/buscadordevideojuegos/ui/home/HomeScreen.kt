@@ -10,16 +10,19 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarDefaults
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -32,10 +35,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
@@ -47,6 +50,8 @@ import com.example.buscadordevideojuegos.ui.common.ErrorIndicator
 import com.example.buscadordevideojuegos.ui.common.LoadingIndicator
 import com.example.buscadordevideojuegos.ui.common.SearchBar
 import com.example.buscadordevideojuegos.ui.navigation.NavigationDestination
+import com.example.buscadordevideojuegos.ui.navigation.Tabs
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 object HomeScreenDestination : NavigationDestination {
@@ -62,11 +67,46 @@ fun HomeScreen(
 ) {
     val uiState = homeScreenViewModel.uiState.collectAsState().value
 
+    val lazyListState = rememberLazyListState()
+    val lazyRowState = rememberLazyListState()
+    val scope = rememberCoroutineScope()
+
     Scaffold(
         topBar = {
             SearchBar(
+                searchWord = if (uiState is HomeScreenUiState.Success) {
+                    uiState.searchWord
+                } else {
+                    ""
+                },
                 onSearch = {
                     homeScreenViewModel.searchVideoGame(it)
+                    scope.launch {
+                        lazyListState.animateScrollToItem(0)
+                    }
+                }
+            )
+        },
+        bottomBar = {
+            BottomNavigationBar(
+                selectedTab = if (uiState is HomeScreenUiState.Success) {
+                    uiState.selectedTab
+                } else {
+                    Tabs.Videogames
+                },
+                onGamesClicked = {
+                    homeScreenViewModel.changeTab(Tabs.Videogames)
+                    scope.launch {
+                        lazyListState.animateScrollToItem(0)
+                        lazyRowState.animateScrollToItem(0)
+                    }
+                },
+                onFavoritesClicked = {
+                    homeScreenViewModel.changeTab(Tabs.Favorites)
+                    scope.launch {
+                        lazyListState.animateScrollToItem(0)
+                        lazyRowState.animateScrollToItem(0)
+                    }
                 }
             )
         },
@@ -80,6 +120,9 @@ fun HomeScreen(
                     onFilterByCategory = {
                         homeScreenViewModel.filterByCategory(it)
                     },
+                    lazyListState = lazyListState,
+                    lazyRowState = lazyRowState,
+                    scope = scope,
                     modifier = Modifier.padding(paddingValues)
                 )
             is HomeScreenUiState.Loading ->
@@ -98,19 +141,56 @@ fun HomeScreen(
 }
 
 @Composable
+fun BottomNavigationBar(
+    selectedTab: Tabs,
+    onGamesClicked: () -> Unit,
+    onFavoritesClicked: () -> Unit
+) {
+    NavigationBar(windowInsets = NavigationBarDefaults.windowInsets) {
+        NavigationBarItem(
+            selected = selectedTab == Tabs.Videogames,
+            onClick = onGamesClicked,
+            icon = {
+                Icon(
+                    painter = painterResource(R.drawable.videogame_asset),
+                    contentDescription = stringResource(R.string.videogames_label)
+                )
+            },
+            label = {
+                Text(text = stringResource(R.string.videogames_label))
+            }
+        )
+        NavigationBarItem(
+            selected = selectedTab == Tabs.Favorites,
+            onClick = onFavoritesClicked,
+            icon = {
+                Icon(
+                    painter = painterResource(R.drawable.favorite),
+                    contentDescription = stringResource(R.string.favorite_label)
+                )
+            },
+            label = {
+                Text(text = stringResource(R.string.favorite_label))
+            }
+        )
+    }
+}
+
+@Composable
 fun GamesList(
     uiState: HomeScreenUiState.Success,
     navigateToGameDetails: (Int) -> Unit,
     onFilterByCategory: (String) -> Unit,
+    lazyListState: LazyListState,
+    lazyRowState: LazyListState,
+    scope: CoroutineScope,
     modifier: Modifier = Modifier
 ) {
-    val lazyState = rememberLazyListState()
-    val scope = rememberCoroutineScope()
-
     Column(
         modifier = modifier.fillMaxSize()
     ) {
         LazyRow(
+            state = lazyRowState,
             horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_small)),
             modifier = Modifier
                 .fillMaxWidth()
@@ -123,25 +203,39 @@ fun GamesList(
                     onClick = {
                         onFilterByCategory(it)
                         scope.launch {
-                            lazyState.animateScrollToItem(0)
+                            lazyListState.animateScrollToItem(0)
                         }
                     }
                 )
             }
         }
         LazyColumn(
-            state = lazyState,
+            state = lazyListState,
             modifier = Modifier
                 .fillMaxSize()
                 .weight(1f)
         ) {
-            items(items = uiState.videoGames, key = { it.id }) { videoGameItem ->
-                VideoGameItemUi(
-                    videoGameItem = videoGameItem,
-                    onClick = {
-                        navigateToGameDetails(it)
+            if (uiState.videoGames.isNotEmpty()) {
+                items(items = uiState.videoGames, key = { it.id }) { videoGameItem ->
+                    VideoGameItemUi(
+                        videoGameItem = videoGameItem,
+                        onClick = {
+                            navigateToGameDetails(it)
+                        }
+                    )
+                }
+            } else {
+                item {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        Text(
+                            text = stringResource(R.string.no_games_found),
+                            modifier = Modifier.padding(dimensionResource(R.dimen.padding_small))
+                        )
                     }
-                )
+                }
             }
         }
     }

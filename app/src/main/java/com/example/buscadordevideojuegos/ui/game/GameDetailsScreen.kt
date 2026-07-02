@@ -67,6 +67,20 @@ fun GameDetailsScreen(
     Scaffold(
         topBar = {
             AppBarGame(
+                isFavorite = if (uiState is GameDetailUiState.Success) {
+                    uiState.isFavorite
+                } else {
+                    false
+                },
+                onFavoriteClick = {
+                    if (uiState is GameDetailUiState.Success) {
+                        if (uiState.isFavorite) {
+                            gameDetailsScreenViewModel.desmarkFavorite()
+                        } else {
+                            gameDetailsScreenViewModel.markFavorite()
+                        }
+                    }
+                },
                 navigateBack = navigateBack,
                 title = if (uiState is GameDetailUiState.Success) {
                     uiState.gameDetails.title

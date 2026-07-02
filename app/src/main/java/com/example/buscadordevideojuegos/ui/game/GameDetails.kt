@@ -1,7 +1,10 @@
 package com.example.buscadordevideojuegos.ui.game
 
 sealed interface GameDetailUiState {
-    data class Success(val gameDetails: GameDetails) : GameDetailUiState
+    data class Success(
+        val gameDetails: GameDetails,
+        val isFavorite: Boolean = false
+    ) : GameDetailUiState
     object Error : GameDetailUiState
     object Loading : GameDetailUiState
 }

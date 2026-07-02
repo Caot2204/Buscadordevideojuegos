@@ -15,4 +15,8 @@
     <string name="graphics_label">Graphics: %1$s</string>
     <string name="storage_label">Storage: %1$s</string>
     <string name="screenshots_label">Screenshots:</string>
+    <string name="videogames_label">Videogames</string>
+    <string name="favorite_label">Favorites</string>
+    <string name="mark_desmark_favorite">Mark/Desmark favorite</string>
+    <string name="no_games_found">No games</string>
 </resources>
